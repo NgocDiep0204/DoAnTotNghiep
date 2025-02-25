@@ -11,7 +11,6 @@ public class AppointmentDetails
     public required int Quantity { get; set; }
     [ForeignKey("ServiceId")]
     public Services? Services { get; set; }
-    [ForeignKey("AppointmentId")]
-    public Appointments? Appointment { get; set; }
-    
+
+    [ForeignKey("AppointmentId")] public Appointments? Appointment { get; set; }
 }
