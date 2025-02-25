@@ -1,0 +1,58 @@
+﻿using api.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+
+namespace api.Data
+{
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
+    {
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+            : base(options) { }
+
+        public DbSet<Appointments> Appointments { get; set; }
+        public DbSet<Messages> Messages { get; set; }
+        public DbSet<Services> Services { get; set; }
+        public DbSet<AppointmentDetails> AppointmentDetails { get; set; }
+        public DbSet<Dentists> Dentists { get; set; }
+        public DbSet<Payments> Payments { get; set; }
+        public DbSet<Reviews> Reviews { get; set; }
+        public DbSet<RevokedToken> RevokedTokens {get;set;}
+        public DbSet<OtpStorage> OtpStorages {get;set;}
+        
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            SeedRoles(modelBuilder);
+
+            modelBuilder.Entity<OtpStorage>(entity =>
+            {
+                entity.HasOne(o => o.ApplicationUser)
+                    .WithMany()
+                    .HasForeignKey(o => o.UserId)   
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(o => o.UserId);
+            });
+
+            modelBuilder.Entity<AppointmentDetails>()
+                .HasKey(rd => new { rd.AppointmentId, rd.ServiceId });
+
+            modelBuilder.Entity<AppointmentDetails>()
+                .HasOne(rd => rd.Appointment)
+                .WithMany(r => r.AppointmentDetails)
+                .HasForeignKey(rd => rd.AppointmentId);
+        }
+        private void SeedRoles(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<IdentityRole>().HasData(
+                new IdentityRole() { Name = "Admin", ConcurrencyStamp = "1", NormalizedName = "Admin" },
+                new IdentityRole() { Name = "User", ConcurrencyStamp = "2", NormalizedName = "User" },
+                new IdentityRole() { Name = "Dentist", ConcurrencyStamp = "3", NormalizedName = "Dentist" }
+            );
+        }
+        
+    }
+    
+}
