@@ -25,6 +25,12 @@ namespace api.Data
         {
             base.OnModelCreating(modelBuilder);
             SeedRoles(modelBuilder);
+            
+            modelBuilder.Entity<Dentists>()
+                .HasOne(d => d.User)
+                .WithOne()
+                .HasForeignKey<Dentists>(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<OtpStorage>(entity =>
             {
@@ -43,6 +49,27 @@ namespace api.Data
                 .HasOne(rd => rd.Appointment)
                 .WithMany(r => r.AppointmentDetails)
                 .HasForeignKey(rd => rd.AppointmentId);
+            
+            modelBuilder.Entity<Reviews>()
+                .HasOne(r => r.Customers)
+                .WithMany(u => u.CustomerReviews)
+                .HasForeignKey(r => r.CustomerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // 🔹 Quan hệ 1-N: Dentists -> Reviews
+            modelBuilder.Entity<Reviews>()
+                .HasOne(r => r.Dentists)
+                .WithMany(d => d.Reviews)
+                .HasForeignKey(r => r.DentistId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // 🔹 Quan hệ 1-N: Dentists -> Appointments
+            modelBuilder.Entity<Appointments>()
+                .HasOne(a => a.Dentists)
+                .WithMany(d => d.Appointments)
+                .HasForeignKey(a => a.DentistId)
+                .OnDelete(DeleteBehavior.Cascade);
+        
         }
         private void SeedRoles(ModelBuilder modelBuilder)
         {

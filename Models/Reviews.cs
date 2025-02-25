@@ -1,9 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace api.Models;
 
 public class Reviews
 {
+    [Key]
     public string ReviewId { get; set; }
     public string CustomerId { get; set; }
     public string DentistId { get; set; }
@@ -13,5 +15,5 @@ public class Reviews
     [ForeignKey("CustomerId")]
     public ApplicationUser? Customers { get; set; }
     [ForeignKey("DentistId")]
-    public ApplicationUser? Dentists { get; set; }
+    public Dentists? Dentists { get; set; }
 }
