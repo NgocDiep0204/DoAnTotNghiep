@@ -8,4 +8,5 @@ public interface IAuthenticationService
     Task<ServiceResponse.RegisterResponse> RegisterAsync(RegisterDto registerDto);
 
     Task<ServiceResponse.LoginResponse> LoginAsync(LoginDto loginDto);
+    public string GenerateRandomOtp();
 }

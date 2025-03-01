@@ -1,5 +1,9 @@
+using api.Data;
 using api.DTOs.Authentication;
+using api.Models;
 using api.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace api.Controllers;
@@ -9,10 +13,18 @@ namespace api.Controllers;
 public class AuthenticationController : ControllerBase
 {
     private readonly IAuthenticationService _authenticationService;
+    private readonly ApplicationDbContext _context;
+    private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly ITokenService _tokenService;
 
-    public AuthenticationController(IAuthenticationService authenticationService)
+    public AuthenticationController(IAuthenticationService authenticationService, ApplicationDbContext context,
+        SignInManager<ApplicationUser> signInManager, ITokenService tokenService)
     {
         _authenticationService = authenticationService;
+        _context = context;
+        _signInManager = signInManager;
+        _tokenService = tokenService;
+        
     }
 
     [HttpPost]
@@ -34,4 +46,24 @@ public class AuthenticationController : ControllerBase
         if (result.Flag == false) return StatusCode(StatusCodes.Status400BadRequest, result.Message);
         return Ok(new { result.Token });
     }
+    
+    [HttpPost]
+    [Authorize]
+    public async Task<IActionResult> Logout()
+    {
+        var currentToken = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+        var userToken = _context.UserTokens.FirstOrDefault(ut => ut.Value == currentToken);
+        if (userToken != null)
+        {
+            _context.UserTokens.Remove(userToken);
+            await _signInManager.SignOutAsync();
+            await _context.SaveChangesAsync();
+            await _tokenService.RevokeTokenAsync(currentToken, DateTime.UtcNow.AddMinutes(2));
+            return StatusCode(StatusCodes.Status200OK,  "Logged out successfully from current device" );
+
+        }
+        return StatusCode(StatusCodes.Status401Unauthorized, "Login Failed");
+    }
+    
+    
 }
