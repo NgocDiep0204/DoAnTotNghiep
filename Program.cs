@@ -1,6 +1,7 @@
 using System.Text;
 using api.Data;
 using api.DTOs;
+using api.Middlewares;
 using api.Models;
 using api.Services.Functions;
 using api.Services.Interfaces;
@@ -131,6 +132,7 @@ builder.Services.AddSingleton(sp =>
 });
 
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 
 builder.Services.AddControllers();
@@ -149,9 +151,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseMiddleware<TokenRevocationMiddleware>();
+app.UseAuthentication();
 app.UseAuthorization();
-
-//app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
 app.MapControllers();
+
+//app.Services.GetRequiredService<ApplicationDbContext>().Database.Migrate();
 
 app.Run();

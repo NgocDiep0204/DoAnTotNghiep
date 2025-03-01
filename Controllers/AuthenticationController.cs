@@ -25,4 +25,13 @@ public class AuthenticationController : ControllerBase
 
         return Ok(new { result.userId });
     }
+
+    [HttpPost]
+    public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        var result = await _authenticationService.LoginAsync(loginDto);
+        if (result.Flag == false) return StatusCode(StatusCodes.Status400BadRequest, result.Message);
+        return Ok(new { result.Token });
+    }
 }

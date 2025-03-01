@@ -1,7 +1,6 @@
 ﻿using api.Data;
 using api.Models;
 using api.Services.Interfaces;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
 namespace api.Services.Functions

@@ -1,21 +1,34 @@
-﻿using api.DTOs.Authentication;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using api.Data;
+using api.DTOs.Authentication;
 using api.Models;
 using api.Responses;
 using api.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace api.Services.Functions;
 
 public class AuthenticationService : IAuthenticationService
 {
+    private readonly IConfiguration _configuration;
+    private readonly ApplicationDbContext _context;
     private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly ITokenService _tokenService;
     private readonly UserManager<ApplicationUser> _userManager;
 
     public AuthenticationService(UserManager<ApplicationUser> userManager,
-        RoleManager<IdentityRole> roleManager)
+        RoleManager<IdentityRole> roleManager, ApplicationDbContext context, ITokenService tokenService,
+        IConfiguration configuration)
     {
         _userManager = userManager;
         _roleManager = roleManager;
+        _tokenService = tokenService;
+        _context = context;
+        _configuration = configuration;
     }
 
     public async Task<ServiceResponse.RegisterResponse> RegisterAsync(RegisterDto registerDto)
@@ -50,15 +63,53 @@ public class AuthenticationService : IAuthenticationService
 
     public async Task<ServiceResponse.LoginResponse> LoginAsync(LoginDto? loginDto)
     {
-        if (loginDto is null) return new ServiceResponse.LoginResponse(false, "loginDto is null", null);
-        if (loginDto.Email != null)
-        {
-            var email = loginDto.Email.Trim();
-            var existsUser = await _userManager.FindByEmailAsync(email);
-            if (existsUser == null) return new ServiceResponse.LoginResponse(false, "user does not exist", null!);
-            var curruntToken = await _userManager.GeneratePasswordResetTokenAsync(existsUser);
-        }
+        //if (loginDto is null) return new ServiceResponse.LoginResponse(false, "Request is null", null!);
+        // var email = loginDto.Email.Trim();
+        var existingUser = await _userManager.Users.FirstOrDefaultAsync(x => x.Email == loginDto.Email);
+        if (existingUser == null) return new ServiceResponse.LoginResponse(false, "User doesn't exist", null!);
 
-        throw new NotImplementedException();
+
+        var currentTokens = await _context.UserTokens.FirstOrDefaultAsync(x => x.UserId == existingUser.Id);
+        if (currentTokens != null && currentTokens.Value != null)
+            await _tokenService.RevokeTokenAsync(currentTokens.Value, DateTime.UtcNow.AddMinutes(2));
+
+        var isPasswordValid = loginDto.Password != null &&
+                              await _userManager.CheckPasswordAsync(existingUser, loginDto.Password);
+        if (!isPasswordValid) return new ServiceResponse.LoginResponse(false, "Invalid password", null!);
+
+        var authClaims = new List<Claim>
+        {
+            new(ClaimTypes.Name, existingUser.Email!),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+
+        var jwtToken = GetToken(authClaims);
+        var tokenString = new JwtSecurityTokenHandler().WriteToken(jwtToken);
+
+        var tokenDescriptor = new IdentityUserToken<string>
+        {
+            UserId = existingUser.Id,
+            LoginProvider = "JWT",
+            Name = "AccessToken",
+            Value = tokenString
+        };
+
+        await _userManager.SetAuthenticationTokenAsync(existingUser, tokenDescriptor.LoginProvider,
+            tokenDescriptor.Name, tokenString);
+
+        return new ServiceResponse.LoginResponse(true, "Logined successfully", tokenString);
+    }
+
+    public JwtSecurityToken GetToken(List<Claim> authClaims)
+    {
+        var authSiginKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
+        var token = new JwtSecurityToken(
+            _configuration["Jwt:Issuer"],
+            _configuration["Jwt:Audience"],
+            expires: DateTime.UtcNow.AddMonths(2),
+            claims: authClaims,
+            signingCredentials: new SigningCredentials(authSiginKey, SecurityAlgorithms.HmacSha256)
+        );
+        return token;
     }
 }
