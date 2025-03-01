@@ -100,6 +100,13 @@ public class AuthenticationService : IAuthenticationService
         return new ServiceResponse.LoginResponse(true, "Logined successfully", tokenString);
     }
 
+    public string GenerateRandomOtp()
+    {
+        Random generator = new();
+        var otp = generator.Next(0, 999999).ToString("D6");
+        return otp;
+    }
+
     public JwtSecurityToken GetToken(List<Claim> authClaims)
     {
         var authSiginKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
