@@ -131,7 +131,7 @@ public class AuthenticationController : ControllerBase
         var message = new MailMessages(new[] { _email }, "OTP Request", body);
         _mailService.SendEmail(message);
 
-        return Ok(new  {otp} );
+        return Ok(new { otp });
     }
 
     [HttpPost]

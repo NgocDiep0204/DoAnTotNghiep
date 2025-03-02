@@ -139,7 +139,7 @@ builder.Services.AddSingleton(sp =>
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IMailService, MailService>();
-
+builder.Services.AddScoped<IImageService, ImageService>();
 
 builder.Services.AddControllers();
 //tu dong xoa token het han
