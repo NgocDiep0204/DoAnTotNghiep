@@ -9,4 +9,5 @@ public interface IAuthenticationService
 
     Task<ServiceResponse.LoginResponse> LoginAsync(LoginDto loginDto);
     public string GenerateRandomOtp();
+    Task RemoveExpiredOtps();
 }

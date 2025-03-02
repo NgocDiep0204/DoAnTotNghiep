@@ -5,6 +5,7 @@ using api.Middlewares;
 using api.Models;
 using api.Services.Functions;
 using api.Services.Interfaces;
+using api.Services.MailService;
 using CloudinaryDotNet;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -113,10 +114,14 @@ builder.Services.AddCors(options =>
 
 
 //add email configuration
-/*var emailConfig = configuration.GetSection("EmailConfiguration").Get<EmailConfiguration>();
+var emailConfig = configuration.GetSection("EmailConfiguration").Get<EmailConfiguration>();
 if (emailConfig == null)
     // Handle missing configuration gracefully, log an error, or throw an exception.
-    throw new InvalidOperationException("Email configuration is missing or invalid.");*/
+    throw new InvalidOperationException("Email configuration is missing or invalid.");
+builder.Services.AddSingleton(emailConfig);
+builder.Services.AddHttpClient();
+
+
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 
 builder.Services.AddSingleton(sp =>
@@ -133,9 +138,12 @@ builder.Services.AddSingleton(sp =>
 
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IMailService, MailService>();
 
 
 builder.Services.AddControllers();
+//tu dong xoa token het han
+builder.Services.AddHostedService<CleanupRevokedTokensService>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
