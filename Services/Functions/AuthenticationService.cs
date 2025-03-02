@@ -107,6 +107,14 @@ public class AuthenticationService : IAuthenticationService
         return otp;
     }
 
+    public async Task RemoveExpiredOtps()
+    {
+        var currentTime = DateTime.UtcNow;
+        await _context.OtpStorages
+            .Where(o => o.ExpiryTime < currentTime)
+            .ExecuteDeleteAsync();
+    }
+
     public JwtSecurityToken GetToken(List<Claim> authClaims)
     {
         var authSiginKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
