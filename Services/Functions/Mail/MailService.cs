@@ -17,25 +17,39 @@ public class MailService : IMailService
         _httpClient = httpClient;
     }
 
-
     public async Task<bool> IsValidEmailAsync(string email)
     {
-        var response =
-            await _httpClient.GetAsync(
+        try
+        {
+            var response = await _httpClient.GetAsync(
                 $"https://api.zerobounce.net/v2/validate?api_key={_emailConfiguration.ApiKey}&email={email}");
-        response.EnsureSuccessStatusCode();
+            
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadAsStringAsync();
+            var json = JObject.Parse(content);
 
-        var content = await response.Content.ReadAsStringAsync();
-        var json = JObject.Parse(content);
-
-        var status = json["status"].ToString();
-        return status == "valid";
+            var status = json["status"]?.ToString();
+            return status == "valid";
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Lỗi xác thực email: {ex.Message}");
+            return false;
+        }
     }
 
     public void SendEmail(MailMessages mailMessage)
     {
-        var emailMessage = CreateEmailMessage(mailMessage);
-        Send(emailMessage);
+        try
+        {
+            var emailMessage = CreateEmailMessage(mailMessage);
+            Send(emailMessage);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Lỗi khi tạo hoặc gửi email: {ex.Message}");
+            throw;
+        }
     }
 
     private MimeMessage CreateEmailMessage(MailMessages mailMessages)
@@ -43,36 +57,39 @@ public class MailService : IMailService
         var emailMessage = new MimeMessage();
         emailMessage.From.Add(new MailboxAddress("email", _emailConfiguration.From));
         emailMessage.To.AddRange(mailMessages.To);
-        emailMessage.Subject = mailMessages.Subject;
+        emailMessage.Subject = mailMessages.Subject ?? "Không có tiêu đề";
 
-        // Kiểm tra nếu messages.Content là null và gán giá trị mặc định
         var emailContent = mailMessages.Content ?? "Nội dung email không được để trống";
+        emailMessage.Body = new TextPart(TextFormat.Text) { Text = emailContent };
 
-        emailMessage.Body = new TextPart(TextFormat.Text)
-        {
-            Text = emailContent
-        };
         return emailMessage;
     }
 
     private void Send(MimeMessage mailMessage)
     {
-        var client = new SmtpClient();
+        using var client = new SmtpClient();
         try
         {
-            client.Connect(_emailConfiguration.SmtpServer, _emailConfiguration.Port, SecureSocketOptions.StartTls);
+            Console.WriteLine("Đang kết nối tới SMTP...");
+            client.Connect(_emailConfiguration.SmtpServer, _emailConfiguration.Port, SecureSocketOptions.Auto);
+
+            Console.WriteLine("Đang xác thực...");
             client.AuthenticationMechanisms.Remove("XOAUTH2");
             client.Authenticate(_emailConfiguration.UserName, _emailConfiguration.Password);
+
+            Console.WriteLine("Đang gửi email...");
             client.Send(mailMessage);
+            Console.WriteLine("Email đã gửi thành công!");
         }
         catch (Exception ex)
         {
-            throw new ApplicationException("Unable to send email.", ex);
+            Console.WriteLine($"Lỗi gửi email: {ex.Message}");
+            throw;
         }
         finally
         {
             client.Disconnect(true);
-            client.Dispose();
+            Console.WriteLine("Đã ngắt kết nối SMTP.");
         }
     }
 }

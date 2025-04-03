@@ -113,6 +113,7 @@ var emailConfig = configuration.GetSection("EmailConfiguration").Get<EmailConfig
 if (emailConfig == null)
     throw new InvalidOperationException("Email configuration is missing or invalid.");
 builder.Services.AddSingleton(emailConfig);
+
 builder.Services.AddHttpClient();
 
 // Cấu hình Cloudinary
