@@ -120,7 +120,7 @@ public class AuthenticationController : ControllerBase
             Id = Guid.NewGuid().ToString(),
             UserId = existingUser.Id,
             Otp = otp,
-            ExpiryTime = DateTime.UtcNow.AddMinutes(2)
+            ExpiryTime = DateTime.UtcNow.AddMinutes(15)
         };
 
         _context.OtpStorages.Add(otpRecord);
@@ -130,7 +130,6 @@ public class AuthenticationController : ControllerBase
 
         var message = new MailMessages(new[] { _email }, "OTP Request", body);
         _mailService.SendEmail(message);
-
         return Ok(new { otp });
     }
 
@@ -166,13 +165,9 @@ public class AuthenticationController : ControllerBase
             await _context.OtpStorages.FirstOrDefaultAsync(o => o.UserId == user.Id && o.Otp == resetPasswordDto.Otp);
         if (otpRecord == null)
             return StatusCode(StatusCodes.Status404NotFound, new { Status = "Error", StatusMessage = "OTP not found" });
-        if (otpRecord.ExpiryTime <= DateTime.UtcNow)
-            return StatusCode(StatusCodes.Status410Gone, new { Status = "Error", StatusMessage = "otp expired" });
-
-
+        if (otpRecord.ExpiryTime <= DateTime.UtcNow) return StatusCode(StatusCodes.Status410Gone, new { Status = "Error", StatusMessage = "otp expired" });
         var token = await _userManager.GeneratePasswordResetTokenAsync(user);
         var result = await _userManager.ResetPasswordAsync(user, token, resetPasswordDto.NewPassword);
-
         if (result.Succeeded)
         {
             _context.OtpStorages.Remove(otpRecord);
