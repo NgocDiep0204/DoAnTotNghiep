@@ -7,8 +7,8 @@ public class AppointmentDetails
 {
     [Key] public required string AppointmentId { get; set; }
 
-    public required string ServiceId { get; set; }
-    public required int Quantity { get; set; }
+    public string? ServiceId { get; set; }
+    public int? Quantity { get; set; }
 
     [ForeignKey("ServiceId")] public DentalServices? Services { get; set; }
 

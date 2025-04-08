@@ -1,33 +1,37 @@
 using api.Data;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
-namespace api.Controllers
+namespace api.Controllers;
+
+[Route("api/[controller]/[action]")]
+[ApiController]
+public class ServiceController : ControllerBase
 {
-    [Route("api/[controller]/[action]   ")]
-    [ApiController]
-    public class ServiceController : ControllerBase
+    private readonly ApplicationDbContext _context;
+
+    public ServiceController(ApplicationDbContext context)
     {
-        private readonly ApplicationDbContext _context;
+        _context = context;
+    }
 
-        public ServiceController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+    [HttpGet]
+    public async Task<IActionResult> GetAllServices()
+    {
+        var allServices = await _context.DentalServices.ToListAsync();
+        return Ok(allServices);
+    }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAllServices()
-        {
-            var allServices = _context.DentalServices.ToList();
-            return Ok(allServices);
-        }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAllServicesByID(string  id)
-        {
-            return Ok(await _context.DentalServices.FindAsync(id));
-        }
-        
-        
+    [HttpGet]
+    public async Task<IActionResult> GetServiceByID(string id)
+    {
+        var serviceById = await _context.DentalServices
+            .Where(c => c.ServiceId == id)
+            .FirstOrDefaultAsync();
+
+        if (serviceById == null) return NotFound();
+
+        return Ok(serviceById);
     }
 }
