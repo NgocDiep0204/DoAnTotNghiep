@@ -5,23 +5,21 @@ namespace api.Models;
 
 public class Payments
 {
-    [Key]
-    public string PaymentId { get; set; }
-    public string AppoitmentId { get; set; }
-    public decimal Amount { get; set; }
-    public DateTime StransactionDate { get; set; }
-    public PaymentStatus Status { get; set; }
-    public PaymentMethod PaymentMethod { get; set; }
-    [ForeignKey("AppointmentId")]
-    public Appointments Appointments { get; set; }
-    
-    
+    [Key] public string PaymentId { get; set; }
+
+    public string? AppoitmentId { get; set; }
+    public decimal? Amount { get; set; }
+    public DateTime? StransactionDate { get; set; }
+    public PaymentStatus? Status { get; set; }
+    public PaymentMethod? PaymentMethod { get; set; }
+
+    [ForeignKey("AppointmentId")] public Appointments? Appointments { get; set; }
 }
 
 public enum PaymentStatus
 {
     Pending,
-    Completed,
+    Completed
 }
 
 public enum PaymentMethod

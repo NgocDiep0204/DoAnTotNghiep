@@ -50,21 +50,21 @@ namespace api.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "ecd4f9f8-e91c-4dea-b3de-46aca025fc93",
+                            Id = "480801a4-5608-4f8f-8061-3158620e5643",
                             ConcurrencyStamp = "1",
                             Name = "Admin",
                             NormalizedName = "Admin"
                         },
                         new
                         {
-                            Id = "76882e2f-7111-41bf-94c3-5d4c8f83250e",
+                            Id = "280b616f-070f-4c6c-bf4e-8746a22335df",
                             ConcurrencyStamp = "2",
                             Name = "User",
                             NormalizedName = "User"
                         },
                         new
                         {
-                            Id = "fdfb20b5-6875-41f9-bcbc-1fb327501853",
+                            Id = "0d1e2e63-dcb8-4e9c-aebd-3a6273fbec5d",
                             ConcurrencyStamp = "3",
                             Name = "Dentist",
                             NormalizedName = "Dentist"
@@ -258,7 +258,7 @@ namespace api.Migrations
                     b.Property<string>("ServiceId")
                         .HasColumnType("varchar(255)");
 
-                    b.Property<int>("Quantity")
+                    b.Property<int?>("Quantity")
                         .HasColumnType("int");
 
                     b.HasKey("AppointmentId", "ServiceId");
@@ -273,18 +273,16 @@ namespace api.Migrations
                     b.Property<string>("AppointmentId")
                         .HasColumnType("varchar(255)");
 
-                    b.Property<DateTime>("AppointmentDate")
+                    b.Property<DateTime?>("AppointmentDate")
                         .HasColumnType("datetime(6)");
 
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("CustomerId")
-                        .IsRequired()
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("DentistId")
-                        .IsRequired()
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("Notes")
@@ -307,21 +305,19 @@ namespace api.Migrations
                     b.Property<string>("ServiceId")
                         .HasColumnType("varchar(255)");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int>("Duration")
+                    b.Property<int?>("Duration")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("Price")
+                    b.Property<decimal?>("Price")
                         .HasColumnType("decimal(65,30)");
 
                     b.Property<string>("ServiceDescription")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("ServiceName")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("ServiceId");
@@ -335,11 +331,9 @@ namespace api.Migrations
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("Speacialty")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("UserId")
-                        .IsRequired()
                         .HasColumnType("varchar(255)");
 
                     b.HasKey("Id");
@@ -355,24 +349,22 @@ namespace api.Migrations
                     b.Property<string>("MessageId")
                         .HasColumnType("varchar(255)");
 
-                    b.Property<bool>("IsSystem")
+                    b.Property<bool?>("IsSystem")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<int>("MessageStatus")
+                    b.Property<int?>("MessageStatus")
                         .HasColumnType("int");
 
                     b.Property<string>("MessageText")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int>("MessageType")
+                    b.Property<int?>("MessageType")
                         .HasColumnType("int");
 
                     b.Property<string>("SenderId")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<DateTime>("SentAt")
+                    b.Property<DateTime?>("SentAt")
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("MessageId");
@@ -408,23 +400,22 @@ namespace api.Migrations
                     b.Property<string>("PaymentId")
                         .HasColumnType("varchar(255)");
 
-                    b.Property<decimal>("Amount")
+                    b.Property<decimal?>("Amount")
                         .HasColumnType("decimal(65,30)");
 
                     b.Property<string>("AppointmentId")
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("AppoitmentId")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int>("PaymentMethod")
+                    b.Property<int?>("PaymentMethod")
                         .HasColumnType("int");
 
-                    b.Property<int>("Status")
+                    b.Property<int?>("Status")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("StransactionDate")
+                    b.Property<DateTime?>("StransactionDate")
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("PaymentId");
@@ -440,22 +431,18 @@ namespace api.Migrations
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("Comment")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("CreateAt")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("CustomerId")
-                        .IsRequired()
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("DentistId")
-                        .IsRequired()
                         .HasColumnType("varchar(255)");
 
-                    b.Property<int>("Rating")
+                    b.Property<int?>("Rating")
                         .HasColumnType("int");
 
                     b.HasKey("ReviewId");
@@ -560,15 +547,12 @@ namespace api.Migrations
                 {
                     b.HasOne("api.Models.ApplicationUser", "Customers")
                         .WithMany()
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CustomerId");
 
                     b.HasOne("api.Models.Dentists", "Dentists")
                         .WithMany("Appointments")
                         .HasForeignKey("DentistId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Customers");
 
@@ -580,8 +564,7 @@ namespace api.Migrations
                     b.HasOne("api.Models.ApplicationUser", "User")
                         .WithOne()
                         .HasForeignKey("api.Models.Dentists", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("User");
                 });
@@ -611,14 +594,12 @@ namespace api.Migrations
                     b.HasOne("api.Models.ApplicationUser", "Customers")
                         .WithMany("CustomerReviews")
                         .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("api.Models.Dentists", "Dentists")
                         .WithMany("Reviews")
                         .HasForeignKey("DentistId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Customers");
 
