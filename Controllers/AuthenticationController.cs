@@ -48,11 +48,26 @@ public class AuthenticationController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
     {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var result = await _authenticationService.LoginAsync(loginDto);
-        if (result.Flag == false) return StatusCode(StatusCodes.Status400BadRequest, result.Message);
+
+        if (!result.Flag)
+        {
+            // Phân loại lỗi cụ thể
+            return result.Message switch
+            {
+                "User doesn't exist" => NotFound(result.Message),
+                "Invalid password" => Unauthorized(result.Message),
+                "Account is inactive" => StatusCode(StatusCodes.Status403Forbidden, result.Message),
+                _ => BadRequest(result.Message)
+            };
+        }
+
         return Ok(new { result.Token });
     }
+
 
     [HttpPost]
     [Authorize]
@@ -128,7 +143,7 @@ public class AuthenticationController : ControllerBase
 
         var body = $@"Your OTP is: {otp}. Note: this OTP will be out of time after 2 minutes";
 
-        var message = new MailMessages(new[] { _email }, "OTP Request", body);
+        var message = new MailMessages(new[] { _email }, "OTP Request", body, false);
         _mailService.SendEmail(message);
         return Ok(new { otp });
     }
@@ -177,4 +192,6 @@ public class AuthenticationController : ControllerBase
 
         return StatusCode(StatusCodes.Status400BadRequest, result.Errors);
     }
+    
+   
 }

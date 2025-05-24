@@ -26,5 +26,20 @@ public enum AppointmentStatus
     Pending,
     Confirmed,
     Completed,
-    Cancelled
+    Canceled
+}
+
+public static class AppointmentStatusExtensions
+{
+    public static string GetDescriptions(this AppointmentStatus status)
+    {
+        return status switch
+        {
+            AppointmentStatus.Pending => "pending",
+            AppointmentStatus.Confirmed => "confirmed",
+            AppointmentStatus.Completed => "completed",
+            AppointmentStatus.Canceled => "canceled",
+            _ => throw new ArgumentOutOfRangeException(nameof(status), status, null)
+        };
+    }
 }

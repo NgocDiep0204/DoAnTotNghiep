@@ -63,10 +63,15 @@ public class AuthenticationService : IAuthenticationService
 
     public async Task<ServiceResponse.LoginResponse> LoginAsync(LoginDto? loginDto)
     {
-        //if (loginDto is null) return new ServiceResponse.LoginResponse(false, "Request is null", null!);
-        // var email = loginDto.Email.Trim();
-        var existingUser = await _userManager.Users.FirstOrDefaultAsync(x => x.Email == loginDto.Email);
-        if (existingUser == null) return new ServiceResponse.LoginResponse(false, "User doesn't exist", null!);
+        var existingUser = await _userManager.Users
+            .FirstOrDefaultAsync(x => x.Email == loginDto.Email);
+
+        if (existingUser == null)
+            return new ServiceResponse.LoginResponse(false, "User doesn't exist", null!);
+
+        // ✅ Kiểm tra trạng thái người dùng
+        if (existingUser.Status == Status.inactive)
+            return new ServiceResponse.LoginResponse(false, "Account is inactive", null!);
 
 
         var currentTokens = await _context.UserTokens.FirstOrDefaultAsync(x => x.UserId == existingUser.Id);
@@ -75,17 +80,28 @@ public class AuthenticationService : IAuthenticationService
 
         var isPasswordValid = loginDto.Password != null &&
                               await _userManager.CheckPasswordAsync(existingUser, loginDto.Password);
-        if (!isPasswordValid) return new ServiceResponse.LoginResponse(false, "Invalid password", null!);
+        if (!isPasswordValid)
+            return new ServiceResponse.LoginResponse(false, "Invalid password", null!);
 
+        // ✅ Lấy các roles của người dùng
+        var roles = await _userManager.GetRolesAsync(existingUser);
+
+        // ✅ Tạo claims từ thông tin người dùng + roles
         var authClaims = new List<Claim>
         {
             new(ClaimTypes.Name, existingUser.Email!),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new(ClaimTypes.NameIdentifier, existingUser.Id),
+            new(ClaimTypes.Name, existingUser.UserName!)
         };
 
+        foreach (var role in roles) authClaims.Add(new Claim(ClaimTypes.Role, role));
+
+        // ✅ Tạo JWT token
         var jwtToken = GetToken(authClaims);
         var tokenString = new JwtSecurityTokenHandler().WriteToken(jwtToken);
 
+        // ✅ Lưu token
         var tokenDescriptor = new IdentityUserToken<string>
         {
             UserId = existingUser.Id,
@@ -97,8 +113,10 @@ public class AuthenticationService : IAuthenticationService
         await _userManager.SetAuthenticationTokenAsync(existingUser, tokenDescriptor.LoginProvider,
             tokenDescriptor.Name, tokenString);
 
-        return new ServiceResponse.LoginResponse(true, "Logined successfully", tokenString);
+        // ✅ Trả về token
+        return new ServiceResponse.LoginResponse(true, "Login successful", tokenString);
     }
+
 
     public string GenerateRandomOtp()
     {

@@ -5,15 +5,14 @@ namespace api.Models;
 
 public class Reviews
 {
-    [Key]
-    public string ReviewId { get; set; }
+    [Key] public string ReviewId { get; set; }
+
     public string? CustomerId { get; set; }
-    public string? DentistId { get; set; }
     public int? Rating { get; set; }
     public string? Comment { get; set; }
     public string? CreateAt { get; set; }
-    [ForeignKey("CustomerId")]
-    public ApplicationUser? Customers { get; set; }
-    [ForeignKey("DentistId")]
-    public Dentists? Dentists { get; set; }
+
+    [ForeignKey("CustomerId")] public ApplicationUser? Customers { get; set; }
+
+    [ForeignKey("DentistId")] public Dentists? Dentists { get; set; }
 }
