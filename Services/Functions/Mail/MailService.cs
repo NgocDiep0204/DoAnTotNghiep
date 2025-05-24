@@ -60,10 +60,16 @@ public class MailService : IMailService
         emailMessage.Subject = mailMessages.Subject ?? "Không có tiêu đề";
 
         var emailContent = mailMessages.Content ?? "Nội dung email không được để trống";
-        emailMessage.Body = new TextPart(TextFormat.Text) { Text = emailContent };
+
+        emailMessage.Body = new TextPart(mailMessages.IsHtml ? TextFormat.Html : TextFormat.Text)
+        {
+            Text = emailContent
+        };
 
         return emailMessage;
     }
+
+
 
     private void Send(MimeMessage mailMessage)
     {

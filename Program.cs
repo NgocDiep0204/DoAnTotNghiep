@@ -1,4 +1,6 @@
 using System.Text;
+using System.Text.Json.Serialization;
+using api.Chat.DI;
 using api.Data;
 using api.DTOs;
 using api.Middlewares;
@@ -9,24 +11,22 @@ using api.Services.MailService;
 using CloudinaryDotNet;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Microsoft.AspNetCore.SignalR;
 
+// Khởi tạo builder
 var builder = WebApplication.CreateBuilder(args);
-
-// Lấy ConnectionString
 var configuration = builder.Configuration;
+
+// Kết nối DB
 var connectionString = configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-// Cấu hình Database
-builder.Services.AddDbContext<ApplicationDbContext>(
-    options => options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
-);
-
-// Cấu hình Swagger
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -44,7 +44,7 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\""
+        Description = "JWT Authorization header using the Bearer scheme. Example: 'Authorization: Bearer {token}'"
     });
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -63,10 +63,8 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// Cấu hình Identity
-builder.Services.Configure<IdentityOptions>(
-    opts => opts.SignIn.RequireConfirmedEmail = true
-);
+// Identity
+builder.Services.Configure<IdentityOptions>(opts => { opts.SignIn.RequireConfirmedEmail = true; });
 builder.Services.Configure<DataProtectionTokenProviderOptions>(o =>
     o.TokenLifespan = TimeSpan.FromHours(1));
 
@@ -76,47 +74,62 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddRoles<IdentityRole>()
     .AddDefaultTokenProviders();
 
-// Cấu hình JWT Authentication
+// JWT + SignalR support
 builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(option =>
-{
-    option.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = configuration["Jwt:Issuer"],
+            ValidAudience = configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]))
+        };
 
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-    };
-});
+        // ✅ Hỗ trợ SignalR
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
 
-// Cấu hình CORS (Sửa lại để tránh xung đột)
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chathub"))
+                    context.Token = accessToken;
+
+                return Task.CompletedTask;
+            }
+        };
+    });
+
+// ✅ UserIdProvider cho SignalR
+builder.Services.AddSingleton<IUserIdProvider, NameIdentifierUserIdProvider>();
+
+// CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
-        builder => builder
-            .AllowAnyMethod()
-            .AllowAnyHeader()
-            .SetIsOriginAllowed(_ => true)
-            .AllowCredentials());
+    options.AddPolicy("AllowAll", builder => builder
+        .AllowAnyMethod()
+        .AllowAnyHeader()
+        .SetIsOriginAllowed(_ => true)
+        .AllowCredentials());
 });
 
-// Cấu hình Email
+// Email
 var emailConfig = configuration.GetSection("EmailConfiguration").Get<EmailConfiguration>();
 if (emailConfig == null)
     throw new InvalidOperationException("Email configuration is missing or invalid.");
 builder.Services.AddSingleton(emailConfig);
-
 builder.Services.AddHttpClient();
 
-// Cấu hình Cloudinary
+// Cloudinary
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 builder.Services.AddSingleton(sp =>
 {
@@ -125,49 +138,42 @@ builder.Services.AddSingleton(sp =>
     return new Cloudinary(account);
 });
 
-// Đăng ký Services
+// Đăng ký service của bạn
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IMailService, MailService>();
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IDentalService, DentalService>();
 
-// Thêm SignalR
-builder.Services.AddSignalR();
+builder.AddChatScope();
 
-// Thêm Controllers
-builder.Services.AddControllers();
+// Controller + JSON circular ref fix
+builder.Services.AddControllers().AddJsonOptions(x =>
+    x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve);
 
-// Tự động xóa token hết hạn
+// Hosted service xóa token
 builder.Services.AddHostedService<CleanupRevokedTokensService>();
 
+// App
 var app = builder.Build();
 
-// Cấu hình Middleware
+// Swagger
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// Sử dụng CORS
+// Middlewares
 app.UseCors("AllowAll");
-
-// Bật HTTPS
 app.UseHttpsRedirection();
-
-// Middleware cho Token
 app.UseMiddleware<TokenRevocationMiddleware>();
-
-// Xác thực & phân quyền
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Cấu hình SignalR (Bật log lỗi)
-app.MapHub<ChatHub>("/chatHub");
+app.MapChat();
 
-// Định tuyến API
+// Controllers
 app.MapControllers();
 
-// Chạy ứng dụng
 app.Run();

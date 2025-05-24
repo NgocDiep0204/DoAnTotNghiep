@@ -19,6 +19,7 @@ public class DentalService : IDentalService
         var query = _context.Appointments
             .Include(u => u.Customers)
             .Include(d => d.Dentists)
+            .ThenInclude(c => c.User)
             .Where(a => a.CustomerId == id || a.DentistId == id)
             .GroupJoin(_context.AppointmentDetails,
                 a => a.AppointmentId,
@@ -38,22 +39,27 @@ public class DentalService : IDentalService
                     x.a.AppointmentId,
                     x.a.CustomerId,
                     x.a.DentistId,
+                    x.a.Status,
+                    x.a.AppointmentDate,
+                    ServiceName = ds != null ? ds.ServiceName : null,
                     CustomerName = x.a.Customers.FullName,
                     DentistName = x.a.Dentists.User.FullName,
                     TotalBill = ds != null && x.appointmentDetails != null
                         ? ds.Price * x.appointmentDetails.Quantity
                         : 0
                 })
-            .GroupBy(x => new { x.AppointmentId, x.CustomerId, x.DentistId })
+            .GroupBy(x => new { x.AppointmentId, x.CustomerId, x.DentistId, x.Status, x.AppointmentDate })
             .Select(g => new
             {
                 g.Key.AppointmentId,
                 g.Key.CustomerId,
-                CustomerName = _context.Users.Where(u => u.Id == g.Key.CustomerId).Select(u => u.FullName)
-                    .FirstOrDefault(),
+                g.Key.Status,
+                g.Key.AppointmentDate,
+                g.FirstOrDefault().CustomerName,
                 g.Key.DentistId,
-                DentistName = _context.Users.Where(u => u.Id == g.Key.DentistId).Select(u => u.FullName)
-                    .FirstOrDefault(),
+                g.FirstOrDefault().DentistName,
+                g.FirstOrDefault().ServiceName,
+
                 TotalBill = g.Sum(x => x.TotalBill)
             });
 

@@ -1,4 +1,5 @@
 ﻿using api.Models;
+using Chat.Web.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +14,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     }
 
     public DbSet<Appointments> Appointments { get; set; }
-    public DbSet<Messages> Messages { get; set; }
     public DbSet<DentalServices> DentalServices { get; set; }
     public DbSet<AppointmentDetails> AppointmentDetails { get; set; }
     public DbSet<Dentists> Dentists { get; set; }
@@ -22,6 +22,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<RevokedToken> RevokedTokens { get; set; }
     public DbSet<OtpStorage> OtpStorages { get; set; }
 
+    public DbSet<Message> Messages { get; set; }
+    public DbSet<ServiceSteps> ServiceSteps { get; set; }
+    public DbSet<Posts> Posts { get; set; }
+    public DbSet<Comments> Comments { get; set; }
+    public DbSet<ImagePost> ImagePosts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -58,12 +63,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             .HasForeignKey(r => r.CustomerId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // 🔹 Quan hệ 1-N: Dentists -> Reviews
-        modelBuilder.Entity<Reviews>()
-            .HasOne(r => r.Dentists)
-            .WithMany(d => d.Reviews)
-            .HasForeignKey(r => r.DentistId)
-            .OnDelete(DeleteBehavior.Restrict);
 
         // 🔹 Quan hệ 1-N: Dentists -> Appointments
         modelBuilder.Entity<Appointments>()
@@ -71,6 +70,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             .WithMany(d => d.Appointments)
             .HasForeignKey(a => a.DentistId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Comments>()
+            .HasOne(c => c.ParentComment)
+            .WithMany(c => c.Replies)
+            .HasForeignKey(c => c.ParentCommentId)
+            .OnDelete(DeleteBehavior.Restrict); // tránh xóa đệ quy gây lỗi
     }
 
     private void SeedRoles(ModelBuilder modelBuilder)
