@@ -12,11 +12,12 @@ public class Dentists
     public string? Introduce { get; set; }
     public string? Speacialty { get; set; }
     public Status? Status { get; set; }
+    public string? Postgraduates {get; set;}
+    public decimal? Price { get; set; }
 
     [ForeignKey("UserId")] public ApplicationUser? User { get; set; }
 
     public ICollection<Appointments>? Appointments { get; set; }
-    public ICollection<Reviews>? Reviews { get; set; }
 }
 
 public enum Status

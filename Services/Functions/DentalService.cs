@@ -44,9 +44,6 @@ public class DentalService : IDentalService
                     ServiceName = ds != null ? ds.ServiceName : null,
                     CustomerName = x.a.Customers.FullName,
                     DentistName = x.a.Dentists.User.FullName,
-                    TotalBill = ds != null && x.appointmentDetails != null
-                        ? ds.Price * x.appointmentDetails.Quantity
-                        : 0
                 })
             .GroupBy(x => new { x.AppointmentId, x.CustomerId, x.DentistId, x.Status, x.AppointmentDate })
             .Select(g => new
@@ -59,8 +56,6 @@ public class DentalService : IDentalService
                 g.Key.DentistId,
                 g.FirstOrDefault().DentistName,
                 g.FirstOrDefault().ServiceName,
-
-                TotalBill = g.Sum(x => x.TotalBill)
             });
 
         return query;

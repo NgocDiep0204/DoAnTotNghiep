@@ -6,6 +6,5 @@ public class PostDto
 {
     public string? UserId { get; set; }
     public string? Content { get; set; }
-    public string? ImageUrl { get; set; }
     public Status? Status { get; set; }
 }

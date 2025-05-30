@@ -59,6 +59,8 @@ public class DentistController : ControllerBase
             Introduce = dentist.Introduce,
             Certificate = dentist.Certificate,
             Speacialty = dentist.Speacialty,
+            Price = dentist.Price,
+            Postgraduates = dentist.Postgraduates,
             Status = Status.active
         };
         _context.Dentists.Add(newDentist);
@@ -79,6 +81,8 @@ public class DentistController : ControllerBase
         dentist.Years = dentistDto.Years;
         dentist.Education = dentistDto.Education;
         dentist.Certificate = dentistDto.Certificate;
+        dentist.Price = dentistDto.Price;
+        dentist.Postgraduates = dentistDto.Postgraduates;
         _context.Dentists.Update(dentist);
 
         return await _context.SaveChangesAsync() > 0

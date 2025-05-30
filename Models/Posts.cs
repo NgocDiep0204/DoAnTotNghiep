@@ -8,7 +8,6 @@ public class Posts
     [Key] public required string PostId { get; set; }
     public string? UserId { get; set; }
     public string? Content { get; set; }
-    public string? ImageUrl { get; set; }
     public StatusPost? Status { get; set; }
     public DateTime? CreatedAt { get; set; }
     [ForeignKey("UserId")] public ApplicationUser? User { get; set; }

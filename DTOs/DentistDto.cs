@@ -11,6 +11,7 @@ public class DentistDto
     public string Certificate { get; set; }
     public string? Introduce { get; set; }
     public string? Speacialty { get; set; }
-    
+    public string? Postgraduates { get; set; }
+    public decimal? Price { get; set; }
     public Status? Status { get; set; }
 }

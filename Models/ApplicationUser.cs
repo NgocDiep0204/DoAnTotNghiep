@@ -11,7 +11,6 @@ public class ApplicationUser : IdentityUser
 
     public string? ImageUrl { get; set; }
     public Status Status { get; set; }
-    public ICollection<Reviews>? CustomerReviews { get; set; }
     public ICollection<Appointments>? Appointments { get; set; }
     
     public virtual ICollection<Message> MessagesSent { get; set; } = new List<Message>();
