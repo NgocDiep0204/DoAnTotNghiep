@@ -13,5 +13,7 @@ public class ApplicationUser : IdentityUser
     public Status Status { get; set; }
     public ICollection<Reviews>? CustomerReviews { get; set; }
     public ICollection<Appointments>? Appointments { get; set; }
-    public ICollection<Message>? MessagesSent { get; set; } = new List<Message>();
+    
+    public virtual ICollection<Message> MessagesSent { get; set; } = new List<Message>();
+    public virtual ICollection<Message> MessagesReceived { get; set; } = new List<Message>();
 }

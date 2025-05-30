@@ -1,19 +1,30 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using api.Models;
 
 namespace Chat.Web.Models;
 
 public class Message
 {
-    [Key] public int Id { get; set; }
+    [Key]
+    public Guid Id { get; set; }
 
-    public string Content { get; set; }
+    [Required]
+    public string Content { get; set; } = string.Empty;
 
-    public string Timestamp { get; set; }
+    public DateTime SentAt { get; set; } = DateTime.UtcNow;
 
-    public string FromUserId { get; set; }
+    [Required]
+    public string SenderId { get; set; } = default!;
+    [ForeignKey("SenderId")]
+    public virtual ApplicationUser Sender { get; set; } = default!;
 
-    public string ToUserId { get; set; }
+    [Required]
+    public string? ReceiverId { get; set; } 
+    [ForeignKey("ReceiverId")]
+    public virtual ApplicationUser? Receiver { get; set; } 
+    
+    public Guid? RoomId { get; set; }
+    public virtual UserRoom? Room { get; set; }
 
-    public virtual Room ToRoom { get; set; }
-    public int Stick { get; set; }
 }

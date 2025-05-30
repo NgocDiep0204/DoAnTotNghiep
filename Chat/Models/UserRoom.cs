@@ -1,17 +1,14 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using api.Models;
 
 namespace Chat.Web.Models;
 
 public class UserRoom
 {
-    [Column(Order = 0)] [Key] public int Id { get; set; }
-
-    [Column(Order = 1)] public string UserId { get; set; }
-
-    [Column(Order = 2)] public int RoomId { get; set; }
-
-    public virtual Room Room { get; set; }
-
-    [Column(Order = 3)] public int Role { get; set; }
+    [Key]
+    public Guid Id { get; set; }
+    public string RoomName { get; set; } = string.Empty;
+    public string Creator { get; set; } = string.Empty;
+    public virtual ICollection<ApplicationUser> Users { get; set; } = new List<ApplicationUser>();
+    public virtual ICollection<Message> Messages { get; set; } = new List<Message>();
 }

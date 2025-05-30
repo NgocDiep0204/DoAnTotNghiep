@@ -23,6 +23,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<OtpStorage> OtpStorages { get; set; }
 
     public DbSet<Message> Messages { get; set; }
+    public DbSet<UserRoom> UserRooms { get; set; }
     public DbSet<ServiceSteps> ServiceSteps { get; set; }
     public DbSet<Posts> Posts { get; set; }
     public DbSet<Comments> Comments { get; set; }
@@ -62,7 +63,25 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             .WithMany(u => u.CustomerReviews)
             .HasForeignKey(r => r.CustomerId)
             .OnDelete(DeleteBehavior.Restrict);
+        
+        // Chat
+        modelBuilder.Entity<Message>()
+            .HasOne(m => m.Sender)
+            .WithMany(u => u.MessagesSent)
+            .HasForeignKey(m => m.SenderId)
+            .OnDelete(DeleteBehavior.Restrict);
 
+        modelBuilder.Entity<Message>()
+            .HasOne(m => m.Receiver)
+            .WithMany(u => u.MessagesReceived)
+            .HasForeignKey(m => m.ReceiverId)
+            .OnDelete(DeleteBehavior.Restrict);
+        
+        // UserRoom
+        modelBuilder.Entity<UserRoom>()
+            .HasMany(r => r.Users)
+            .WithMany()
+            .UsingEntity(j => j.ToTable("UserRoomMembers")); 
 
         // 🔹 Quan hệ 1-N: Dentists -> Appointments
         modelBuilder.Entity<Appointments>()
