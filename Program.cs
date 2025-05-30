@@ -173,6 +173,7 @@ app.UseMiddleware<TokenRevocationMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapChat();
 
 app.MapControllers();
 app.Run();

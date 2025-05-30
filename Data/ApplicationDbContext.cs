@@ -56,12 +56,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             .WithMany(r => r.AppointmentDetails)
             .HasForeignKey(rd => rd.AppointmentId);
 
-        modelBuilder.Entity<Reviews>()
-            .HasOne(r => r.Customers)
-            .WithMany(u => u.CustomerReviews)
-            .HasForeignKey(r => r.CustomerId)
-            .OnDelete(DeleteBehavior.Restrict);
-        
         // Chat
         modelBuilder.Entity<Message>()
             .HasOne(m => m.Sender)
@@ -74,12 +68,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             .WithMany(u => u.MessagesReceived)
             .HasForeignKey(m => m.ReceiverId)
             .OnDelete(DeleteBehavior.Restrict);
-        
+
         // UserRoom
         modelBuilder.Entity<UserRoom>()
             .HasMany(r => r.Users)
             .WithMany()
-            .UsingEntity(j => j.ToTable("UserRoomMembers")); 
+            .UsingEntity(j => j.ToTable("UserRoomMembers"));
 
         // 🔹 Quan hệ 1-N: Dentists -> Appointments
         modelBuilder.Entity<Appointments>()
