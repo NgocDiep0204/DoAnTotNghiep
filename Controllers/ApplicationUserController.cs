@@ -25,6 +25,32 @@ public class ApplicationUserController : ControllerBase
         _roleManager = roleManager;
     }
 
+    [HttpGet]
+    public async Task<ActionResult<List<object>>> GetAllUsers()
+    {
+        var users = _userManager.Users.ToList();
+
+        var userList = new List<object>();
+
+        foreach (var user in users)
+        {
+            var roles = await _userManager.GetRolesAsync(user);
+            var role = roles.FirstOrDefault() ?? "No Role"; 
+            userList.Add(new
+            {
+                user.Id,
+                user.UserName,
+                user.Email,
+                user.FullName,
+                user.Gender,
+                user.ImageUrl,
+                user.Status,
+                Roles = role
+            });
+        }
+        return Ok(userList);
+    }
+
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetUserProfile()
@@ -57,6 +83,7 @@ public class ApplicationUserController : ControllerBase
             user.UserName,
             user.ImageUrl,
             user.PhoneNumber,
+            user.Status,
             Role = role
         });
     }
@@ -106,7 +133,7 @@ public class ApplicationUserController : ControllerBase
                 else
                     return StatusCode((int)uploadResult.StatusCode, "Image upload failed.");
             }
-
+            userToUpdate.Status = user.Status;
             userToUpdate.Gender = user.Gender;
             userToUpdate.FullName = user.FullName;
             userToUpdate.ImageUrl = imgPath;
@@ -117,6 +144,40 @@ public class ApplicationUserController : ControllerBase
 
         return BadRequest(ModelState);
     }
+    [HttpPut]
+    public async Task<IActionResult> UpdateUserProfiles([FromForm] ApplicationUserDto user, string email)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var userToUpdate = await _userManager.FindByEmailAsync(email);
+        if (userToUpdate == null)
+            return NotFound("User not found.");
+
+        if (user.FormFile != null)
+        {
+            var uploadResult = await _imageService.AddImageAsync(user.FormFile);
+            if (uploadResult.StatusCode == HttpStatusCode.OK)
+            {
+                userToUpdate.ImageUrl = uploadResult.SecureUrl.AbsoluteUri;
+            }
+            else
+            {
+                return StatusCode((int)uploadResult.StatusCode, "Image upload failed.");
+            }
+        }
+
+        userToUpdate.Gender = user.Gender;
+        userToUpdate.FullName = user.FullName;
+
+        var result = await _userManager.UpdateAsync(userToUpdate);
+        if (result.Succeeded)
+            return Ok(new { Status = "Success", StatusMessage = "User updated successfully" });
+
+        var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+        return StatusCode(StatusCodes.Status500InternalServerError, $"User update failed: {errors}");
+    }
+
 
     [HttpPut]
     public async Task<IActionResult> UpdateUserById(string id, string email, string fullname, Status status)

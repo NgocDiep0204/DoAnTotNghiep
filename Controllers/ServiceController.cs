@@ -79,10 +79,8 @@ public class ServiceController : ControllerBase
             ServiceName = dentalService.ServiceName,
             ServiceDescription = dentalService.ServiceDescription,
             Benefit = dentalService.Benefit,
-            Price = dentalService.Price,
             Status = dentalService.Status,
             CreatedAt = DateTime.Now,
-            Duration = dentalService.Duration,
             ImgService = imgPath
         };
         _context.DentalServices.Add(newService);
@@ -112,9 +110,7 @@ public class ServiceController : ControllerBase
         existService.ServiceName = dentalService.ServiceName ?? existService.ServiceName;
         existService.ServiceDescription = dentalService.ServiceDescription ?? existService.ServiceDescription;
         existService.Benefit = dentalService.Benefit ?? existService.Benefit;
-        existService.Price = dentalService.Price ?? existService.Price;
         existService.Status = dentalService.Status ?? existService.Status;
-        existService.Duration = dentalService.Duration ?? existService.Duration;
         existService.ImgService = imgPath ?? existService.ImgService;
 
         _context.DentalServices.Update(existService);

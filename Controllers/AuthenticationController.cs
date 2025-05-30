@@ -59,7 +59,7 @@ public class AuthenticationController : ControllerBase
             return result.Message switch
             {
                 "User doesn't exist" => NotFound(result.Message),
-                "Invalid password" => Unauthorized(result.Message),
+                "Invalid password" => StatusCode(StatusCodes.Status409Conflict,result.Message),
                 "Account is inactive" => StatusCode(StatusCodes.Status403Forbidden, result.Message),
                 _ => BadRequest(result.Message)
             };
@@ -70,21 +70,19 @@ public class AuthenticationController : ControllerBase
 
 
     [HttpPost]
-    [Authorize]
     public async Task<IActionResult> Logout()
     {
         var currentToken = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
         var userToken = _context.UserTokens.FirstOrDefault(ut => ut.Value == currentToken);
+
         if (userToken != null)
         {
             _context.UserTokens.Remove(userToken);
             await _signInManager.SignOutAsync();
             await _context.SaveChangesAsync();
             await _tokenService.RevokeTokenAsync(currentToken, DateTime.UtcNow.AddMinutes(2));
-            return StatusCode(StatusCodes.Status200OK, "Logged out successfully from current device");
         }
-
-        return StatusCode(StatusCodes.Status401Unauthorized, "Login Failed");
+        return Ok("Logged out successfully");
     }
 
     [Authorize]

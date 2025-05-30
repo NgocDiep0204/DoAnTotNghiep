@@ -17,8 +17,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<DentalServices> DentalServices { get; set; }
     public DbSet<AppointmentDetails> AppointmentDetails { get; set; }
     public DbSet<Dentists> Dentists { get; set; }
-    public DbSet<Payments> Payments { get; set; }
-    public DbSet<Reviews> Reviews { get; set; }
     public DbSet<RevokedToken> RevokedTokens { get; set; }
     public DbSet<OtpStorage> OtpStorages { get; set; }
 

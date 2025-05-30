@@ -73,15 +73,17 @@ public class AuthenticationService : IAuthenticationService
         if (existingUser.Status == Status.inactive)
             return new ServiceResponse.LoginResponse(false, "Account is inactive", null!);
 
-
-        var currentTokens = await _context.UserTokens.FirstOrDefaultAsync(x => x.UserId == existingUser.Id);
-        if (currentTokens != null && currentTokens.Value != null)
-            await _tokenService.RevokeTokenAsync(currentTokens.Value, DateTime.UtcNow.AddMinutes(2));
-
+        // ✅ Kiểm tra mật khẩu trước
         var isPasswordValid = loginDto.Password != null &&
                               await _userManager.CheckPasswordAsync(existingUser, loginDto.Password);
+
         if (!isPasswordValid)
             return new ServiceResponse.LoginResponse(false, "Invalid password", null!);
+
+        // ✅ Nếu đúng mật khẩu thì mới thu hồi token cũ
+        var currentToken = await _userManager.GetAuthenticationTokenAsync(existingUser, "JWT", "AccessToken");
+        if (!string.IsNullOrEmpty(currentToken))
+            await _tokenService.RevokeTokenAsync(currentToken, DateTime.UtcNow.AddMinutes(2));
 
         // ✅ Lấy các roles của người dùng
         var roles = await _userManager.GetRolesAsync(existingUser);
@@ -95,27 +97,20 @@ public class AuthenticationService : IAuthenticationService
             new(ClaimTypes.Name, existingUser.UserName!)
         };
 
-        foreach (var role in roles) authClaims.Add(new Claim(ClaimTypes.Role, role));
+        foreach (var role in roles)
+            authClaims.Add(new Claim(ClaimTypes.Role, role));
 
         // ✅ Tạo JWT token
         var jwtToken = GetToken(authClaims);
         var tokenString = new JwtSecurityTokenHandler().WriteToken(jwtToken);
 
         // ✅ Lưu token
-        var tokenDescriptor = new IdentityUserToken<string>
-        {
-            UserId = existingUser.Id,
-            LoginProvider = "JWT",
-            Name = "AccessToken",
-            Value = tokenString
-        };
-
-        await _userManager.SetAuthenticationTokenAsync(existingUser, tokenDescriptor.LoginProvider,
-            tokenDescriptor.Name, tokenString);
+        await _userManager.SetAuthenticationTokenAsync(existingUser, "JWT", "AccessToken", tokenString);
 
         // ✅ Trả về token
         return new ServiceResponse.LoginResponse(true, "Login successful", tokenString);
     }
+
 
 
     public string GenerateRandomOtp()

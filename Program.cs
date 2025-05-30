@@ -166,14 +166,13 @@ if (app.Environment.IsDevelopment())
 
 // Middlewares
 app.UseCors("AllowAll");
+
 app.UseHttpsRedirection();
+
 app.UseMiddleware<TokenRevocationMiddleware>();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapChat();
-
-// Controllers
 app.MapControllers();
-
 app.Run();
