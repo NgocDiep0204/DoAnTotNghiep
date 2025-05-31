@@ -12,6 +12,7 @@ public class Appointments
     public DateTime? AppointmentDate { get; set; }
     public AppointmentStatus? Status { get; set; }
     public string? Notes { get; set; }
+    public string? DentistNotes { get; set; }
     public DateTime? CreatedAt { get; set; }
 
     [ForeignKey("CustomerId")] public ApplicationUser? Customers { get; set; }

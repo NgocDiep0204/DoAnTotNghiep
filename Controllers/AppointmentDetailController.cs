@@ -29,4 +29,15 @@ public class AppointmentDetailController : ControllerBase
             ? StatusCode(StatusCodes.Status200OK, "Success")
             : StatusCode(StatusCodes.Status500InternalServerError, "Error");
     }
+
+    [HttpDelete]
+    public async Task<IActionResult> DeleteAppointmentDetail(AppointmentDetailDto appointmentDetailDto)
+    {
+        var appointmentDetail = _context.AppointmentDetails.Where(a=> a.AppointmentId == appointmentDetailDto.AppointmentId
+                                                                                                            && a.ServiceId == appointmentDetailDto.ServiceId);
+        _context.Remove(appointmentDetail);
+        return await _context.SaveChangesAsync() > 0
+            ? StatusCode(StatusCodes.Status200OK, "Success")
+            : StatusCode(StatusCodes.Status500InternalServerError, "Error");
+    }
 }

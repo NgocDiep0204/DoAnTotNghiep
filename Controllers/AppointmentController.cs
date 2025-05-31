@@ -63,10 +63,26 @@ public class AppointmentController : ControllerBase
         var bookedTimes = await _context.Appointments
             .Where(a => a.DentistId == dentistId
                         && a.AppointmentDate.HasValue
-                        && a.Status != AppointmentStatus.Canceled)
+                        && a.Status != AppointmentStatus.Canceled
+                        )
             .Select(a => a.AppointmentDate.Value)
             .ToListAsync();
         return Ok(bookedTimes);
+    }
+    
+    [HttpGet]
+    public async Task<IActionResult> GetAppointmentsByDentist(string dentistId)
+    {
+        var appoiments = await _context.Appointments
+            .Include(c => c.Customers)
+            .Include(a => a.AppointmentDetails)
+            .Where(a => a.DentistId == dentistId
+                        && a.Status != AppointmentStatus.Canceled
+                        && a.Status != AppointmentStatus.Pending
+            )
+            
+            .ToListAsync();
+        return Ok(appoiments);
     }
     [HttpGet]
     public async Task<IActionResult> getAppointmentsByStatus(AppointmentStatus status)
@@ -109,6 +125,7 @@ public class AppointmentController : ControllerBase
         
         appointment.DentistId = dto.DentistId;
         appointment.Status = dto.Status;
+        appointment.DentistNotes = dto.DentisNote;
         await _context.SaveChangesAsync();
 
         return Ok(new { message = "Status updated successfully." });

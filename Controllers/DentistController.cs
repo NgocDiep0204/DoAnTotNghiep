@@ -100,11 +100,11 @@ public class DentistController : ControllerBase
             return NotFound("Dentist hoặc User không tồn tại");
 
         _context.Dentists.Remove(dentist);
-        await _context.SaveChangesAsync();
+          
 
         var result = await _userManager.DeleteAsync(user);
-        if (!result.Succeeded)
-            return BadRequest(result.Errors);
+        if (!result.Succeeded && await _context.SaveChangesAsync()<0)
+            return StatusCode(StatusCodes.Status500InternalServerError, result.Errors);
 
         return NoContent();
     }

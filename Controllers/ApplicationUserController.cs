@@ -133,7 +133,6 @@ public class ApplicationUserController : ControllerBase
                 else
                     return StatusCode((int)uploadResult.StatusCode, "Image upload failed.");
             }
-            userToUpdate.Status = user.Status;
             userToUpdate.Gender = user.Gender;
             userToUpdate.FullName = user.FullName;
             userToUpdate.ImageUrl = imgPath;
