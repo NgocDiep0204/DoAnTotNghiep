@@ -26,6 +26,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Posts> Posts { get; set; }
     public DbSet<Comments> Comments { get; set; }
     public DbSet<ImagePost> ImagePosts { get; set; }
+    public DbSet<Prescriptions> Prescriptions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

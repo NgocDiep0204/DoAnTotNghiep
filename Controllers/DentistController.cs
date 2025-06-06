@@ -47,6 +47,21 @@ public class DentistController : ControllerBase
         return Ok(dentist);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetDentistsByUser(string id)
+    {
+        var dentist = await _context.Dentists
+            .Include(c => c.User)
+            .FirstOrDefaultAsync(c => c.UserId == id);
+
+        if (dentist == null)
+            return NotFound("Không tìm thấy nha sĩ tương ứng với người dùng.");
+
+        return Ok(dentist); // Lúc này chắc chắn có dữ liệu => 200 OK
+    }
+    
+    
+    
     [HttpPost]
     public async Task<IActionResult> CreateDentist(DentistDto dentist)
     {

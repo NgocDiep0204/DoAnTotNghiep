@@ -43,6 +43,34 @@ public class AppointmentController : ControllerBase
     }
 
     [HttpGet]
+    [HttpGet]
+    public async Task<IActionResult> getCustomerListByDentist(string dentistId)
+    {
+        var completedAppointments = await _context.Appointments
+            .Where(a => a.DentistId == dentistId && a.Status == AppointmentStatus.Completed)
+            .Include(a => a.Customers)
+            .OrderBy(a => a.AppointmentDate)
+            .ToListAsync(); // dùng ToListAsync thay vì AsEnumerable
+
+        var groupedData = completedAppointments
+            .GroupBy(a => new { a.CustomerId, a.Customers.FullName })
+            .Select(g => new
+            {
+                CustomerId = g.Key.CustomerId,
+                CustomerName = g.Key.FullName,
+                TotalCompleted = g.Count(),
+                Appointments = g.Select((a, index) => new
+                {
+                    VisitNumber = index + 1,
+                    a.AppointmentDate,
+                    a.Notes
+                }).ToList()
+            })
+            .ToList();
+
+        return Ok(groupedData);
+    }
+    [HttpGet]
     public async Task<IActionResult> GetAppointmentsByUserId(string userId)
     {
         var userName = User.FindFirst(ClaimTypes.Name)?.Value;
@@ -50,7 +78,16 @@ public class AppointmentController : ControllerBase
         var user = await _userManager.FindByNameAsync(userName);
         if (user != null)
         {
-            var appoinmentList = _dentalService.GetServicesAsync(userId);
+            var appoinmentList = await _context.Appointments
+                .Include(c => c.Customers)
+                .Include(a => a.AppointmentDetails)
+                .ThenInclude(ad => ad.Services)
+                .Include(d => d.Dentists)
+                .ThenInclude(u => u.User)
+                .Where(c => c.CustomerId == user.Id)
+                .OrderBy(a => a.AppointmentDate)
+                .AsNoTracking()
+                .ToListAsync();
             return Ok(appoinmentList);
         }
 
@@ -66,6 +103,7 @@ public class AppointmentController : ControllerBase
                         && a.Status != AppointmentStatus.Canceled
                         )
             .Select(a => a.AppointmentDate.Value)
+            
             .ToListAsync();
         return Ok(bookedTimes);
     }
@@ -75,12 +113,15 @@ public class AppointmentController : ControllerBase
     {
         var appoiments = await _context.Appointments
             .Include(c => c.Customers)
+            .Include(d => d.Dentists)
             .Include(a => a.AppointmentDetails)
+            .ThenInclude(ad => ad.Services)
             .Where(a => a.DentistId == dentistId
                         && a.Status != AppointmentStatus.Canceled
                         && a.Status != AppointmentStatus.Pending
             )
-            
+            .OrderBy(a => a.AppointmentDate)
+            .AsNoTracking()
             .ToListAsync();
         return Ok(appoiments);
     }
@@ -91,6 +132,7 @@ public class AppointmentController : ControllerBase
             .Include(c => c.Customers)
             .Include(d => d.Dentists)
             .Where(a => a.Status == status) // Thêm điều kiện lọc theo status
+            .OrderBy(a => a.AppointmentDate)
             .AsNoTracking()
             .ToListAsync();
 
@@ -125,7 +167,7 @@ public class AppointmentController : ControllerBase
         
         appointment.DentistId = dto.DentistId;
         appointment.Status = dto.Status;
-        appointment.DentistNotes = dto.DentisNote;
+        appointment.DentistNotes = dto.DentisNotes;
         await _context.SaveChangesAsync();
 
         return Ok(new { message = "Status updated successfully." });

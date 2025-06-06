@@ -30,6 +30,7 @@ public enum AppointmentStatus
     Canceled
 }
 
+
 public static class AppointmentStatusExtensions
 {
     public static string GetDescriptions(this AppointmentStatus status)

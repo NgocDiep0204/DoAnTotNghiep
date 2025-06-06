@@ -52,6 +52,7 @@ public class ServiceController : ControllerBase
         var serviceByStatus = await _context.DentalServices
             .Include(c => c.ServiceSteps)
             .Where(c => c.Status == status)
+            .OrderBy(c => c.CreatedAt)
             .AsNoTracking()
             .ToListAsync();
 
@@ -80,6 +81,8 @@ public class ServiceController : ControllerBase
             ServiceDescription = dentalService.ServiceDescription,
             Benefit = dentalService.Benefit,
             Status = dentalService.Status,
+            Price = dentalService.Price,
+            Unit = dentalService.Unit,
             CreatedAt = DateTime.Now,
             ImgService = imgPath
         };
@@ -110,6 +113,8 @@ public class ServiceController : ControllerBase
         existService.ServiceName = dentalService.ServiceName ?? existService.ServiceName;
         existService.ServiceDescription = dentalService.ServiceDescription ?? existService.ServiceDescription;
         existService.Benefit = dentalService.Benefit ?? existService.Benefit;
+        existService.Price = dentalService.Price ?? existService.Price;
+        existService.Unit = dentalService.Unit ?? existService.Unit;
         existService.Status = dentalService.Status ?? existService.Status;
         existService.ImgService = imgPath ?? existService.ImgService;
 

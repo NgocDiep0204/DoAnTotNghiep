@@ -25,7 +25,8 @@ public class ServiceStepController : ControllerBase
             Id = Guid.NewGuid().ToString(),
             ServiceId = serviceStepDto.ServiceId,
             Title = serviceStepDto.Title,
-            Description = serviceStepDto.Description
+            Description = serviceStepDto.Description,
+            CreatedAt = DateTime.Now,
         };
         _context.ServiceSteps.Add(newStep);
         return await _context.SaveChangesAsync() > 0
@@ -51,6 +52,7 @@ public class ServiceStepController : ControllerBase
     {
         var serviceSteps = await _context.ServiceSteps
             .Where(c => c.ServiceId == id)
+            .OrderBy(c => c.CreatedAt)
             .ToListAsync();
 
         if (serviceSteps == null || serviceSteps.Count == 0)

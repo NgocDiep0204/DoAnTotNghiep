@@ -36,26 +36,24 @@ public class DentalService : IDentalService
             .SelectMany(x => x.DentalService.DefaultIfEmpty(),
                 (x, ds) => new
                 {
-                    x.a.AppointmentId,
-                    x.a.CustomerId,
-                    x.a.DentistId,
-                    x.a.Status,
-                    x.a.AppointmentDate,
-                    ServiceName = ds != null ? ds.ServiceName : null,
-                    CustomerName = x.a.Customers.FullName,
-                    DentistName = x.a.Dentists.User.FullName,
+                    x.a,
+                    Quantity = x.appointmentDetails.Quantity,
+                    Services = ds,
+                    Customers = x.a.Customers,
+                    Dentists = x.a.Dentists,
+                    TotalBill = ds != null && x.appointmentDetails != null
+                        ? ds.Price * x.appointmentDetails.Quantity
+                        : 0
                 })
-            .GroupBy(x => new { x.AppointmentId, x.CustomerId, x.DentistId, x.Status, x.AppointmentDate })
+            .GroupBy(x => new { x.a })
             .Select(g => new
             {
-                g.Key.AppointmentId,
-                g.Key.CustomerId,
-                g.Key.Status,
-                g.Key.AppointmentDate,
-                g.FirstOrDefault().CustomerName,
-                g.Key.DentistId,
-                g.FirstOrDefault().DentistName,
-                g.FirstOrDefault().ServiceName,
+                g.Key,
+                g.FirstOrDefault().Quantity,
+                g.FirstOrDefault().Customers,
+                g.FirstOrDefault().Dentists,
+                g.FirstOrDefault().Services,
+                TotalBill = g.Sum(x => x.TotalBill)
             });
 
         return query;

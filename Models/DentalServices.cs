@@ -10,6 +10,8 @@ public class DentalServices
     public string? ServiceDescription { get; set; }
     public string? Benefit { get; set; }
     public string? ImgService { get; set; }
+    public decimal? Price { get; set; }
+    public string? Unit { get; set; }
     public DateTime? CreatedAt { get; set; }
     public Status? Status { get; set; }
     public ICollection<AppointmentDetails>? AppointmentDetails { get; set; }
