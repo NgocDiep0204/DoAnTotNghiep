@@ -95,6 +95,41 @@ public class AppointmentController : ControllerBase
     }
 
     [HttpGet]
+    public async Task<IActionResult> GetPatientList(string dentistId)
+    {
+        var result = await _context.Appointments
+            .Where(a => a.DentistId == dentistId 
+                        && a.Status == AppointmentStatus.Completed 
+                        && a.CustomerId != null)
+            .Include(a => a.Customers)
+            .GroupBy(a => a.CustomerId)
+            .Select(g => new 
+            {
+                CustomerId = g.Key,
+                FullName = g.First().Customers.FullName,
+                Email = g.First().Customers.Email,
+                TotalCompletedAppointments = g.Count()
+            })
+            .ToListAsync();
+        return Ok(result);
+    }
+    [HttpGet]
+    public async Task<IActionResult> GetPatientDetail(string id)
+    {
+        var appoinmentList = await _context.Appointments
+            .Include(a => a.AppointmentDetails)
+            .ThenInclude(ad => ad.Services)
+            .Include(d => d.Dentists)
+            .Where(c => c.CustomerId == id &&  c.Status == AppointmentStatus.Completed)
+            .OrderBy(a => a.AppointmentDate)
+            .AsNoTracking()
+            .ToListAsync();
+        return Ok(appoinmentList);
+        
+    }
+    
+    
+    [HttpGet]
     public async Task<IActionResult> GetAppointmentsByDentistId(string dentistId)
     {
         var bookedTimes = await _context.Appointments
