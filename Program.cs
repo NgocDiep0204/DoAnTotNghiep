@@ -1,5 +1,7 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using api.Appointment.DI;
+using api.Appointment.Services;
 using api.Chat.DI;
 using api.Data;
 using api.DTOs;
@@ -146,6 +148,7 @@ builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IDentalService, DentalService>();
 
 builder.AddChatScope();
+builder.AddAppointmentScheduleScope();
 
 // Controller + JSON circular ref fix
 builder.Services.AddControllers().AddJsonOptions(x =>
@@ -176,4 +179,7 @@ app.UseAuthorization();
 app.MapChat();
 
 app.MapControllers();
+
+app.InitializeAppointmentSchedule();
+
 app.Run();

@@ -1,4 +1,5 @@
-﻿using api.Models;
+﻿using api.Appointment.Model;
+using api.Models;
 using Chat.Web.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -21,6 +22,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<OtpStorage> OtpStorages { get; set; }
 
     public DbSet<Message> Messages { get; set; }
+    public DbSet<AppointmentSchedule> AppointmentSchedules { get; set; }
     public DbSet<UserRoom> UserRooms { get; set; }
     public DbSet<ServiceSteps> ServiceSteps { get; set; }
     public DbSet<Posts> Posts { get; set; }
@@ -68,6 +70,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             .HasOne(m => m.Receiver)
             .WithMany(u => u.MessagesReceived)
             .HasForeignKey(m => m.ReceiverId)
+            .OnDelete(DeleteBehavior.Restrict);
+            
+        modelBuilder.Entity<AppointmentSchedule>()
+            .HasOne(a => a.Dentist)
+            .WithMany(d => d.AppointmentSchedules)
+            .HasForeignKey(a => a.DentistId)
             .OnDelete(DeleteBehavior.Restrict);
 
         // UserRoom

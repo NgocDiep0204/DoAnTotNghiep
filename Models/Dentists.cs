@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using api.Appointment.Model;
 
 namespace api.Models;
 
@@ -18,6 +19,8 @@ public class Dentists
     [ForeignKey("UserId")] public ApplicationUser? User { get; set; }
 
     public ICollection<Appointments>? Appointments { get; set; }
+    
+    public ICollection<AppointmentSchedule> AppointmentSchedules { get; set; } = new List<AppointmentSchedule>();
 }
 
 public enum Status
