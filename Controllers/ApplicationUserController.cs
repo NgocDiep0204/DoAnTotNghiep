@@ -144,15 +144,17 @@ public class ApplicationUserController : ControllerBase
         return BadRequest(ModelState);
     }
     [HttpPut]
-    public async Task<IActionResult> UpdateUserProfiles([FromForm] ApplicationUserDto user, string email)
+    public async Task<IActionResult> UpdateUserProfiles([FromForm] ApplicationUserDto user, string email, string id)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var userToUpdate = await _userManager.FindByEmailAsync(email);
+        var userToUpdate = await _userManager.FindByIdAsync(id);
         if (userToUpdate == null)
             return NotFound("User not found.");
-
+        var existingUser = await _userManager.FindByEmailAsync(email);
+        if (existingUser != null && existingUser.Id != userToUpdate.Id)
+            return Conflict("Email đã được sử dụng bởi người dùng khác.");
         if (user.FormFile != null)
         {
             var uploadResult = await _imageService.AddImageAsync(user.FormFile);
@@ -168,6 +170,8 @@ public class ApplicationUserController : ControllerBase
 
         userToUpdate.Gender = user.Gender;
         userToUpdate.FullName = user.FullName;
+        userToUpdate.Email = email;
+        userToUpdate.UserName = email;
 
         var result = await _userManager.UpdateAsync(userToUpdate);
         if (result.Succeeded)
@@ -189,6 +193,7 @@ public class ApplicationUserController : ControllerBase
             return Conflict("Email đã được sử dụng bởi người dùng khác.");
         user.FullName = fullname;
         user.Email = email;
+        user.UserName = email;
         user.UserName = email;
         user.Status = status;
         var result = await _userManager.UpdateAsync(user);

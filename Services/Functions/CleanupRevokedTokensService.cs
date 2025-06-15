@@ -18,13 +18,23 @@ public class CleanupRevokedTokensService : BackgroundService
             using (var scope = _serviceProvider.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                var expiredTokens = context.RevokedTokens.Where(t => t.RevokedAt <= DateTime.UtcNow);
+                var expiredTokens = context.RevokedTokens
+                    .Where(t => t.RevokedAt <= DateTime.UtcNow);
 
                 context.RevokedTokens.RemoveRange(expiredTokens);
                 await context.SaveChangesAsync();
             }
 
-            await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
+            try
+            {
+                await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
+            }
+            catch (TaskCanceledException)
+            {
+                // Token was cancelled, exit the loop gracefully
+                break;
+            }
         }
     }
+
 }

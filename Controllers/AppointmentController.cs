@@ -85,7 +85,7 @@ public class AppointmentController : ControllerBase
                 .Include(d => d.Dentists)
                 .ThenInclude(u => u.User)
                 .Where(c => c.CustomerId == user.Id)
-                .OrderBy(a => a.AppointmentDate)
+                .OrderByDescending(a => a.AppointmentDate)
                 .AsNoTracking()
                 .ToListAsync();
             return Ok(appoinmentList);
@@ -121,7 +121,7 @@ public class AppointmentController : ControllerBase
             .ThenInclude(ad => ad.Services)
             .Include(d => d.Dentists)
             .Where(c => c.CustomerId == id &&  c.Status == AppointmentStatus.Completed)
-            .OrderBy(a => a.AppointmentDate)
+            .OrderByDescending(a => a.AppointmentDate)
             .AsNoTracking()
             .ToListAsync();
         return Ok(appoinmentList);
@@ -155,7 +155,7 @@ public class AppointmentController : ControllerBase
                         && a.Status != AppointmentStatus.Canceled
                         && a.Status != AppointmentStatus.Pending
             )
-            .OrderBy(a => a.AppointmentDate)
+            .OrderByDescending(a => a.AppointmentDate)
             .AsNoTracking()
             .ToListAsync();
         return Ok(appoiments);
@@ -167,7 +167,7 @@ public class AppointmentController : ControllerBase
             .Include(c => c.Customers)
             .Include(d => d.Dentists)
             .Where(a => a.Status == status) // Thêm điều kiện lọc theo status
-            .OrderBy(a => a.AppointmentDate)
+            .OrderByDescending(a => a.AppointmentDate)
             .AsNoTracking()
             .ToListAsync();
 
